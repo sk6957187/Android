@@ -1,0 +1,79 @@
+package com.nayak.alarmapplication;
+
+import android.content.Intent;
+import android.os.Build;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TimePicker;
+
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class AddActivity extends AppCompatActivity {
+
+    private TimePicker timePicker;
+    private EditText editText;
+    private Button buttonSave, buttonCancel;
+
+    private Alarm alarm;
+    private boolean needRefresh; // ✅ fixed variable name
+
+    @RequiresApi(api = Build.VERSION_CODES.M) // ✅ corrected constant name
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_add);
+
+        timePicker = findViewById(R.id.timePicker);
+        editText = findViewById(R.id.name);
+        buttonSave = findViewById(R.id.button_save);
+        buttonCancel = findViewById(R.id.button_cancel);
+
+        // ✅ Corrected 'new View.onClickListener()' to 'new View.OnClickListener()'
+        buttonSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int hour, minute;
+
+                // ✅ Handle time differently for Android versions
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    hour = timePicker.getHour();
+                    minute = timePicker.getMinute();
+                } else {
+                    hour = timePicker.getCurrentHour();
+                    minute = timePicker.getCurrentMinute();
+                }
+
+                String name = editText.getText().toString().trim();
+
+                DatabaseHelper db = new DatabaseHelper(getApplicationContext());
+                alarm = new Alarm(hour, minute, name, true);
+                long insertedId = db.addAlarm(alarm);
+                if (insertedId != -1) {
+                    alarm.setId((int) insertedId);
+                }
+
+                needRefresh = true;
+                finish(); // properly close the activity
+            }
+        });
+
+        buttonCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                needRefresh = false;
+                finish(); // ✅ correctly close without saving
+            }
+        });
+    }
+
+    @Override
+    public void finish() {
+        Intent data = new Intent();
+        data.putExtra("needRefresh", true);
+        this.setResult(RESULT_OK, data);
+        super.finish();
+    }
+}
