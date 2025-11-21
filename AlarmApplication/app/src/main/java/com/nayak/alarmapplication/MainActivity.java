@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
     public static String activeAlarm = "";
     private ListView listView;
 
-    private static final int REQUEST_CODE = 1;
+    public static final int REQUEST_CODE = 1;
     public static List<Alarm> alarmList = new ArrayList<>();
     private CustomAdapter customAdapter;
     private DatabaseHelper db;
@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
             listView = findViewById(R.id.listView);
             List<Alarm> list = db.getAllAlarms();
             alarmList.addAll(list);
-            customAdapter = new CustomAdapter(getApplicationContext(), alarmList);
+            customAdapter = new CustomAdapter(MainActivity.this, alarmList);
             listView.setAdapter(customAdapter);
         } catch (Throwable t) {
             // Write stack trace to external files directory so user can retrieve it via adb

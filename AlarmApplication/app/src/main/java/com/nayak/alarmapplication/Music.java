@@ -13,6 +13,12 @@ import android.provider.Settings;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class Music extends Service {
 
@@ -39,10 +45,46 @@ public class Music extends Service {
 
         startForeground(1, notification);
 
+        // Log service start
+        try {
+            File out = new File(getExternalFilesDir(null), "music_started.txt");
+            FileWriter fw = new FileWriter(out, true);
+            String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date());
+            fw.write(time + " - Music.onStartCommand invoked\n");
+            fw.close();
+        } catch (IOException ioe) {
+            // ignore
+        }
+
         if (mediaPlayer == null) {
-            mediaPlayer = MediaPlayer.create(this, Settings.System.DEFAULT_ALARM_ALERT_URI);
-            mediaPlayer.setLooping(true);
-            mediaPlayer.start();
+            try {
+                mediaPlayer = MediaPlayer.create(this, Settings.System.DEFAULT_ALARM_ALERT_URI);
+                if (mediaPlayer == null) {
+                    throw new Exception("MediaPlayer.create returned null");
+                }
+                mediaPlayer.setLooping(true);
+                mediaPlayer.start();
+                // Log successful start
+                try {
+                    File out = new File(getExternalFilesDir(null), "music_started.txt");
+                    FileWriter fw = new FileWriter(out, true);
+                    String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date());
+                    fw.write(time + " - MediaPlayer started successfully\n");
+                    fw.close();
+                } catch (IOException ioe) {
+                    // ignore
+                }
+            } catch (Throwable t) {
+                try {
+                    File out = new File(getExternalFilesDir(null), "music_error.txt");
+                    FileWriter fw = new FileWriter(out, true);
+                    String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date());
+                    fw.write(time + " - MediaPlayer failed: " + t.toString() + "\n");
+                    fw.close();
+                } catch (IOException ioe) {
+                    // ignore
+                }
+            }
         }
 
         return START_STICKY;
